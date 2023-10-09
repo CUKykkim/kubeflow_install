@@ -16,6 +16,14 @@ spec:
         app: authservice
     spec:
       serviceAccountName: authservice
+      initContainers:
+      - name: fix-permission
+        image: busybox
+        command: ['sh', '-c']
+        args: ['chmod -R 777 /var/lib/authservice;']
+        volumeMounts:
+        - mountPath: /var/lib/authservice
+          name: data
       containers:
       - name: authservice
         image: gcr.io/arrikto/kubeflow/oidc-authservice:e236439
