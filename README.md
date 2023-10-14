@@ -56,7 +56,7 @@ kubectl get CephCluster -n rook-ceph
 ## StorageClass 생성 및 설정
 
 ```
-cd /Rook/deploy/examples/csi/rbd
+cd rook/deploy/examples/csi/rbd
 ```
 
 ```
