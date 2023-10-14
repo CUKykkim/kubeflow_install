@@ -30,8 +30,22 @@ cd rook/deploy/examples
 - Rook 실행
 
 ```
-kubectl create -f crds.yaml -f common.yaml -f operator.yaml cluster.yaml
+kubectl create -f crds.yaml
 ```
+
+
+```
+kubectl create -f common.yaml
+```
+
+```
+kubectl create -f operator.yaml
+```
+
+```
+kubectl create -f cluster.yaml
+```
+
 
 - Rook  실행 확인
 ```
