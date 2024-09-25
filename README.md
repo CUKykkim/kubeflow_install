@@ -2,193 +2,97 @@
 
 ## kubernetes 버전 확인
 
-- kubernetes 1.25 버전으로 설치해야 안정적으로 설치가능한 것으로 확인되었습니다. 
-- docker를 이미 설치하신 분이시라면 아래 버전으로 docker를 재 설치 하여 주시길 바랍니다.
+ - [Docker 공식홈페이지](https://desktop.docker.com/win/main/amd64/135262/Docker%20Desktop%20Installer.exe?_gl=1*1nmfr0b*_gcl_au*NDcwODQ0NTY0LjE3MjQ5MDc0Nzc.*_ga*MjQxMTA3MDcuMTY5MDI1NDEzMQ..*_ga_XJWPQMJYHQ*MTcyNTM0MTE2NS4xNC4xLjE3MjUzNDEyNjguNjAuMC4w)에서 Docker Desktop 다운로드
+   
+   * Docker Desktop Ver.4.270 
 
-  * [docker desktop 4.19.0](https://docs.docker.com/desktop/release-notes/#4190)
+## 시스템 최소사양
 
-## kubeflow를 설치하기 전 볼륨 설정 (kubeflow에서 사용할 디스크 설정)
-
-### Install LVM
-```
-sudo apt-get install -y lvm2
-```
-
-### Install Rook
-
-- Rook 설치
-
-```
-git clone --single-branch --branch v1.11.1 https://github.com/rook/rook.git
-```
-
-- 디렉토리 이동
-```
-cd rook/deploy/examples
-```
-
-- Rook 실행
-
-```
-kubectl create -f crds.yaml
-```
+- 4 코어, 16GB RAM 이상
 
 
-```
-kubectl create -f common.yaml
-```
+## kubeflow를 설치하기 전 볼륨 설정 
+
+- Local Path Provisioner 설치
+
+  ```
+  kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+
+  ```
+
+- Local Path Provisioner 설치 확인
+
+  ```
+  kubectl get pods -n local-path-storage
+
+  ```
+
+- Local Path Provisioner로 Storage Class가 생성되었는지 확인
+
+  ```
+  kubectl get storageclass
+  ```
+- local-path를 default Storage Class로 설정
+
+  ```
+  kubectl patch storageclass local-path -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
+
+  ```
+- 변경 사항 확인
+
+  ```
+  kubectl get storageclass
+  ```
+
+
+
+-기존 hostpath의 default 설정 제거
 
 ```
-kubectl create -f operator.yaml
+kubectl patch storageclass hostpath -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": null}}}'
 ```
 
-```
-kubectl create -f cluster.yaml
-```
-
-
-- Rook  실행 확인
-```
-kubectl get CephCluster -n rook-ceph
-```
-
-
-## StorageClass 생성 및 설정
-
-```
-cd rook/deploy/examples/csi/rbd
-```
-
-```
-kubectl apply -f storageclass-test.yaml
-```
-
-- 기존 default storage 설정 해제
-
-```
-kubectl patch storageclass hostpath -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
-```
-
-- 새로 설치한 rook-ceph을 default storage로 설정
-
-```
-kubectl patch sc rook-ceph-block -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-```
-
-### pv 설정 해주기
-
-- vi 편집기로 pv1.yaml 를 작성한다.
-
-```
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv1
-spec:
-  storageClassName: rook-ceph-block
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/tmp/pv1"
-```
-
-- vi 편집기로 pv2.yaml 를 작성한다.
-
-```
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv2
-spec:
-  storageClassName: rook-ceph-block
-  capacity:
-    storage: 20Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/tmp/pv2"
-```
-
-- vi 편집기로 pv3.yaml 를 작성한다.
-
-```
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv3
-spec:
-  storageClassName: rook-ceph-block
-  capacity:
-    storage: 20Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/tmp/pv3"
-```
-
-- vi 편집기로 pv4.yaml 를 작성한다.
-
-```
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv4
-spec:
-  storageClassName: rook-ceph-block
-  capacity:
-    storage: 20Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/tmp/pv4"
-```
-
-- pv를 생성해 준다. 
-
-```
-kubectl apply -f pv1.yaml pv2.yaml pv3.yaml pv4.yaml
-```
 
 ## kustomize 다운 받기
 
 - windows terminal을 열어 ubuntu tab을 생성한다.
 
-- 다음 명령어를 입력해 kustomize 를 다운 받는다.
+- 명령어를 입력해 kustomize 를 다운 받는다.
 
-```
-wget https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.1/kustomize_v5.0.1_linux_amd64.tar.gz
 
-```
+  ```
+  VERSION=5.2.1
+  curl -LO https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${VERSION}/kustomize_v${VERSION}_linux_amd64.tar.gz
 
-```
-tar -xvf kustomize_v5.0.1_linux_amd64.tar.gz
-```
+  ```
 
-## kustomize를 활용한 kubeflow 설치
+- 압축 해제 및 설치
 
-- 우분투 상에서 다음 명령어를 수행하여 kustomize를 설치한다.
+  ```
+  tar -zxvf kustomize_v${VERSION}_linux_amd64.tar.gz
+  ```
 
-```
-sudo mv kustomize /usr/local/bin
-kustomize version
-```
+- 실행 파일을 시스템 경로로 이동시키고 권한을 부여한다. 
 
-## kubeflow 다운로드 받기
-
-```
-git clone https://github.com/CUKykkim/kubeflow_install.git
-cd kubeflow_install
-```
+  ```
+  sudo mv kustomize /usr/local/bin/kustomize_v${VERSION}
+  sudo chmod +x /usr/local/bin/kustomize_v${VERSION}
+  ```
 
 
 ## kubeflow 설치하기
 
+- kubeflow Kubeflow 설치에 필요한 **매니페스트 파일(manifest files) 다운
+
+  ```
+  git clone https://github.com/kubeflow/manifests.git
+  cd manifast
+  ```
+
 - `kustomize` 명령어를 입력하여 모든 yaml파일을 k8s상에서 수행
-```
-while ! kustomize build example | kubectl apply -f -; do echo "Retrying to apply resources"; sleep 10; done
-```
+  ```
+  while ! kustomize build example | kubectl apply -f -; do echo "Retrying to apply resources"; sleep 10; done
+  ```
 
 - 설치가 다 끝났다면, 다음 명령어를 사용하여 k8s 시스템상에 pod의 상태를 확인한다.
 
@@ -256,7 +160,7 @@ kubeflow                    ml-pipeline-scheduledworkflow-5db54d75c5-272tw      
 kubeflow                    ml-pipeline-ui-5bd8d6dc84-5mnxg                             2/2     Running            0          74m
 kubeflow                    ml-pipeline-viewer-crd-68fb5f4d58-fgljw                     2/2     Running            1          74m
 kubeflow                    ml-pipeline-visualizationserver-8476b5c645-7w64q            2/2     Running            0          74m
-kubeflow                    mpi-operator-d5bfb8489-bvz6s                                0/1     CrashLoopBackOff   17         74m
+kubeflow                    mpi-operator-d5bfb8489-bvz6s                                1/1     Running            17         74m
 kubeflow                    mysql-f7b9b7dd4-h9trv                                       2/2     Running            0          74m
 kubeflow                    notebook-controller-deployment-8b64878d4-dqw7w              1/1     Running            0          74m
 kubeflow                    profiles-deployment-64675b488b-g5k9k                        2/2     Running            0          74m
@@ -294,28 +198,42 @@ user@example.com
 ```
 
 
-
 ## kubeflow pipeline 돌려보기
+
+# kfp 패키지 설치
+- !pip install kfp
 
 
 - hello pipeline
 
 ```
 import kfp
-import kfp.dsl as dsl
+from kfp import dsl
 
+# 첫 번째 컴포넌트: 숫자 더하기
+@dsl.component
+def add_numbers(a: int, b: int) -> int:
+    return a + b
+
+# 두 번째 컴포넌트: 숫자 곱하기
+@dsl.component
+def multiply_numbers(x: int, y: int) -> int:
+    return x * y
+
+# 파이프라인 정의
 @dsl.pipeline(
-    name='HelloKubeflow',
-    description='Print HelloWorld'
+    name='Hello Pipeline',
+    description='먼저 두 숫자를 더하고, 그 다음 두 숫자를 곱하는 파이프라인입니다.'
 )
-def hellokubelfow_pipeline():
-    hello = dsl.ContainerOp(
-        name='HelloKubeflow',
-        image='alpine',
-        command=['sh', '-c'],
-        arguments=['echo "hello Kubeflow"']
-    )
+def add_and_multiply_pipeline(a: int = 5, b: int = 3, x: int = 4, y: int = 2):
+    # 첫 번째 컴포넌트
+    addition_task = add_numbers(a=a, b=b)
+    
+    # 두 번째 컴포넌트가 첫 번째 컴포넌트 이후에 실행되도록 설정 (데이터 의존성 없음)
+    multiplication_task = multiply_numbers(x=x, y=y)
+    multiplication_task.after(addition_task)
 
+# 파이프라인 컴파일
 if __name__ == '__main__':
-    kfp.compiler.Compiler().compile(hellokubelfow_pipeline, 'containerop.pipeline.tar.gz')
+    kfp.compiler.Compiler().compile(pipeline_func=add_and_multiply_pipeline, package_path='add_and_multiply_pipeline.yaml')
 ```
