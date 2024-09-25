@@ -2,6 +2,8 @@
 
 ## kubernetes 버전 확인
 
+- kubernetes 1.29 버전 이상에서 동작
+
  - [Docker 공식홈페이지](https://desktop.docker.com/win/main/amd64/135262/Docker%20Desktop%20Installer.exe?_gl=1*1nmfr0b*_gcl_au*NDcwODQ0NTY0LjE3MjQ5MDc0Nzc.*_ga*MjQxMTA3MDcuMTY5MDI1NDEzMQ..*_ga_XJWPQMJYHQ*MTcyNTM0MTE2NS4xNC4xLjE3MjUzNDEyNjguNjAuMC4w)에서 Docker Desktop 다운로드
    
    * Docker Desktop Ver.4.270 
