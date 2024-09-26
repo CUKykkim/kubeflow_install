@@ -77,8 +77,8 @@ kubectl patch storageclass hostpath -p '{"metadata": {"annotations": {"storagecl
 - 실행 파일을 시스템 경로로 이동시키고 권한을 부여한다. 
 
   ```
-  sudo mv kustomize /usr/local/bin/kustomize_v${VERSION}
-  sudo chmod +x /usr/local/bin/kustomize_v${VERSION}
+  sudo mv kustomize /usr/local/bin/kustomize
+  sudo chmod +x /usr/local/bin/kustomize
   ```
 
 
