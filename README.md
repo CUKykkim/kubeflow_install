@@ -88,7 +88,7 @@ kubectl patch storageclass hostpath -p '{"metadata": {"annotations": {"storagecl
 
   ```
   git clone https://github.com/kubeflow/manifests.git
-  cd manifast
+  cd manifests/
   ```
 
 - `kustomize` 명령어를 입력하여 모든 yaml파일을 k8s상에서 수행
